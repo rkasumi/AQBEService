@@ -1,4 +1,10 @@
-This is your new Play 2.0 application
-=====================================
+ADLParser
 
-This file will be packaged with your application, when using `play dist`.
+/adl/[adl名]?lang=[言語]
+でADLの詳細情報を取得
+
+/concept/[adl名]?lang=[言語]
+でADL名を使ってXMLを検索、見つかったXMLの中に含まれるADLをすべて情報表示
+
+※それぞれJSON形式で返す
+※lang要素は省略可、省略した場合はenになる
