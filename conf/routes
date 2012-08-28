@@ -2,11 +2,16 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-# Home page
-GET     /                           controllers.Application.index
-GET     /adl/                       controllers.Application.adlList
-GET     /adl/:name                  controllers.Application.adl(name, lang ?= "en")
-GET     /concept/:name              controllers.Application.concept(name, lang ?= "en")
+# ADLParserAPI
+GET     /                           controllers.ADLParserService.index
+GET     /adl/                       controllers.ADLParserService.adlList
+GET     /adl/:name                  controllers.ADLParserService.adl(name, lang ?= "en")
+GET     /concept/:name              controllers.ADLParserService.concept(name, lang ?= "en")
+
+# AQBE API
+GET     /find                       controllers.AQBEService.find
+GET     /findAll                    controllers.AQBEService.findAll
+POST    /insert                     controllers.AQBEService.insert
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

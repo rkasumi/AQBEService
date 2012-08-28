@@ -8,25 +8,29 @@ import scala.xml.parsing.{ConstructingParser,XhtmlParser}
 import parse._
 import play.api.mvc.Action
 import play.api.mvc.Controller
+import com.mongodb.casbah._
+import net.liftweb.json.Extraction
 
-object Application extends Controller with LiftJson{
+object ADLParserService extends Controller with LiftJson{
 
   implicit val formats = DefaultFormats
   
-  def index = TODO
+  def index = Action {
+    Ok("")
+  }
 
   def adl(name: String, lang: String) = Action {
     AdlParser(name).map(_.getConcept(lang)) match {
       case Some(c) => Ok(Extraction.decompose(c))
       case None => NotFound("404 File NotFound")
-	}
+    }
   }
 
   def adlList = Action {
     val url = Settings.AdlPath
     val xhtml = XhtmlParser(Source.fromURL(url))
     val allAdl = (xhtml \\ "a").map(_.text.replace(".adl",""))
-      Ok(Extraction.decompose(allAdl))
+    Ok(Extraction.decompose(allAdl))
   }
 
   def concept(name: String, lang: String) = Action {
