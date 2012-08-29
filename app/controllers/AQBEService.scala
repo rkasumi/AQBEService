@@ -14,20 +14,20 @@ object AQBEService extends Controller {
     val db = MongoConnection(new ServerAddress("wako3.u-aizu.ac.jp",27017))("aqbe")("docs")
     val cond = mongoJSON.parse(request.body.toString).asInstanceOf[DBObject]
     val result = db.find(cond).toList
-    Ok("[" + result.mkString(",\n") + "]").as(JSON)
+    Ok("""{"result":[""" + result.mkString(",\n") + "]}").as(JSON)
   }
 
   def findAll = Action {
     val db = MongoConnection(new ServerAddress("wako3.u-aizu.ac.jp",27017))("aqbe")("docs")
     val result = db.find.toList
-    Ok("[" + result.mkString(",\n") + "]").as(JSON)
+    Ok("""{"result":[""" + result.mkString(",\n") + "]}").as(JSON)
   }
 
   def insert = Action(parse.json) { request =>
     val db = MongoConnection(new ServerAddress("wako3.u-aizu.ac.jp",27017))("aqbe")("docs")
     val data = mongoJSON.parse(request.body.toString).asInstanceOf[DBObject]
     db.insert(data)
-    Ok("""{"response":"OK"}""").as(JSON)
+    Ok("""{"result":"OK"}""").as(JSON)
   }
 
 }

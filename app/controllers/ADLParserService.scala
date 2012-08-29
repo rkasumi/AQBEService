@@ -14,7 +14,7 @@ import net.liftweb.json.Extraction
 object ADLParserService extends Controller with LiftJson{
 
   implicit val formats = DefaultFormats
-  
+
   def index = Action {
     Ok("")
   }
@@ -30,7 +30,7 @@ object ADLParserService extends Controller with LiftJson{
     val url = Settings.AdlPath
     val xhtml = XhtmlParser(Source.fromURL(url))
     val allAdl = (xhtml \\ "a").map(_.text.replace(".adl",""))
-    Ok(Extraction.decompose(allAdl))
+    Ok(Extraction.decompose(Map("adl" -> allAdl)))
   }
 
   def concept(name: String, lang: String) = Action {

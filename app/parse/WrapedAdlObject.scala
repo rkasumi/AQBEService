@@ -41,6 +41,7 @@ class Ontology(ontology: List[(String, String, String)]) {
 sealed abstract class AdlAttribute {
   val path: String
   val name: String
+  val dataType: String
   override def toString = name + " : " + path + "\n"
 }
 object AdlAttribute {
@@ -49,7 +50,7 @@ object AdlAttribute {
 
     cObject.getRmTypeName match {
       case "ELEMENT" ⇒ DvElement(name, cObject, ontology)
-      case "CLUSTER" ⇒ DvCluster(name, cObject.path, cObject, ontology)
+      case "CLUSTER" ⇒ DvCluster(name, cObject.path, "DvCluster", cObject, ontology)
     }
   }
 }
@@ -60,6 +61,7 @@ object AdlAttribute {
 abstract class DvElement extends AdlAttribute {
   val name: String
   val path: String
+  val dataType: String
 }
 object DvElement {
   def apply(name: String, cObject: CObject, ontology: Ontology) = {
@@ -67,31 +69,32 @@ object DvElement {
       val clist = cObject.asInstanceOf[CComplexObject].getAttributes.get(0).getChildren
       clist.size match {
         case 1 ⇒ generateElement(name, clist.get(0), ontology)
-        case _ ⇒ DvMultipuleElements(name, cObject.path, clist.toList, ontology)
+        case _ ⇒ DvMultipuleElements(name, cObject.path, "DvMultipleElements", clist.toList, ontology)
       }
     } catch {
       case _ ⇒ cObject.isInstanceOf[ArchetypeInternalRef] match { // TODO リファレンス型
-        case true  ⇒ ArchetypeReference("**References", cObject.asInstanceOf[ArchetypeInternalRef].getTargetPath)
-        case false ⇒ DvAny(name, cObject.path)
+        case true  ⇒ ArchetypeReference("**References", "ArchetypeReference", cObject.asInstanceOf[ArchetypeInternalRef].getTargetPath)
+        case false ⇒ DvAny(name, "DvAny", cObject.path)
       }
     }
   }
 
   def generateElement(name: String, cObject: CObject, ontology: Ontology) = {
     val path = cObject.path
-    cObject.getRmTypeName match {
-      case "DvQuantity"    ⇒ DvQuantity(name, path, cObject)
-      case "DV_CODED_TEXT" ⇒ DvCodedText(name, path, cObject, ontology)
-      case "DV_BOOLEAN"    ⇒ DvBoolean(name, path)
-      case "DV_TEXT"       ⇒ DvText(name, path)
-      case "DV_COUNT"      ⇒ DvCount(name, path, cObject)
-      case "DvOrdinal"     ⇒ DvOrdinal(name, path, cObject, ontology)
-      case "DV_MULTIMEDIA" ⇒ DvMultiMedia(name, path, cObject)
-      case "DV_DATE_TIME"  ⇒ DvDateTime(name, path)
-      case "DV_INTERVAL"   ⇒ DvInterval(name, path, cObject)
-      case "DV_PROPORTION" ⇒ DvProportion(name, path, cObject)
-      case "DV_URI"        ⇒ DvURI(name, path)
-      case _               ⇒ DvAny(name, path)
+    val dataType = cObject.getRmTypeName
+    dataType match {
+      case "DvQuantity"    ⇒ DvQuantity(name, path, dataType, cObject)
+      case "DV_CODED_TEXT" ⇒ DvCodedText(name, path, dataType, cObject, ontology)
+      case "DV_BOOLEAN"    ⇒ DvBoolean(name, path, dataType)
+      case "DV_TEXT"       ⇒ DvText(name, path, dataType)
+      case "DV_COUNT"      ⇒ DvCount(name, path, dataType, cObject)
+      case "DvOrdinal"     ⇒ DvOrdinal(name, path, dataType, cObject, ontology)
+      case "DV_MULTIMEDIA" ⇒ DvMultiMedia(name, path, dataType, cObject)
+      case "DV_DATE_TIME"  ⇒ DvDateTime(name, path, dataType)
+      case "DV_INTERVAL"   ⇒ DvInterval(name, path, dataType, cObject)
+      case "DV_PROPORTION" ⇒ DvProportion(name, path, dataType, cObject)
+      case "DV_URI"        ⇒ DvURI(name, path, dataType)
+      case _               ⇒ DvAny(name, path, "DvAny")
     }
   }
 }
@@ -99,92 +102,92 @@ object DvElement {
 /**
  * リファレンス型
  */
-case class ArchetypeReference(name: String, path: String) extends DvElement {
+case class ArchetypeReference(name: String, path: String, dataType: String) extends DvElement {
   override def toString = "ArchetypeRef: " + path + "\n"
 }
 
 /**
  * 真偽値を保存するクラス
  */
-case class DvBoolean(name: String, path: String) extends DvElement {
+case class DvBoolean(name: String, path: String, dataType: String) extends DvElement {
   override def toString = super.toString + " <TRUE/FALSE>\n"
 }
 
 /**
  * テキストフィールドを保存するクラス
  */
-case class DvText(name: String, path: String) extends DvElement {
+case class DvText(name: String, path: String, dataType: String) extends DvElement {
   override def toString = super.toString + " <FreeText>\n"
 }
 
 /**
  * 日付型を保存するクラス
  */
-case class DvDateTime(name: String, path: String) extends DvElement {
+case class DvDateTime(name: String, path: String, dataType: String) extends DvElement {
   override def toString = super.toString + " <1990/01/01>\n"
 }
 
 /**
  * URLを保存するクラス
  */
-case class DvURI(name: String, path: String) extends DvElement {
+case class DvURI(name: String, path: String, dataType: String) extends DvElement {
   override def toString = super.toString + " <http://>\n"
 }
 
 /**
  * 名前とパスのみを保存するクラス
  */
-case class DvAny(name: String, path: String) extends DvElement {
+case class DvAny(name: String, path: String, dataType: String) extends DvElement {
   override def toString = super.toString + " [Any]\n"
 }
 
 /**
  * 選択式リストを保存するクラス
  */
-case class DvCodedText(name: String, path: String, codeList: List[String]) extends DvElement {
+case class DvCodedText(name: String, path: String, dataType: String, codeList: List[String]) extends DvElement {
   override def toString = super.toString + codeList.mkString("\n") + "\n"
 }
 object DvCodedText {
-  def apply(name: String, path: String, cObject: CObject, ontology: Ontology) = {
+  def apply(name: String, path: String, dataType: String, cObject: CObject, ontology: Ontology) = {
     val codeList = allCatch opt {
       cObject.asInstanceOf[CComplexObject].getAttributes.get(0).getChildren.get(0) match {
         case c: CCodePhrase   ⇒ c.getCodeList.map(ontology.getText(_).getOrElse("")).toList
         case c: ConstraintRef ⇒ List(ontology.getText(c.getReference).getOrElse(""))
       }
     }
-    new DvCodedText(name, path, codeList.getOrElse(List()))
+    new DvCodedText(name, path, dataType, codeList.getOrElse(List()))
   }
 }
 
 /**
  * ハッシュリストを保存するクラス
  */
-case class DvOrdinal(name: String, path: String, codeList: Map[Int, Option[String]]) extends DvElement {
+case class DvOrdinal(name: String, path: String, dataType: String, codeList: Map[Int, Option[String]]) extends DvElement {
   override def toString = super.toString + (codeList.map { o ⇒ o._1 + " - " + o._2.getOrElse("") } mkString "\n") + "\n"
 }
 object DvOrdinal {
-  def apply(name: String, path: String, cObject: CObject, ontology: Ontology) = {
+  def apply(name: String, path: String, dataType: String, cObject: CObject, ontology: Ontology) = {
     val codeList = Map() ++ cObject.asInstanceOf[CDvOrdinal].getList.map {
       o ⇒ o.getValue -> ontology.getText(o.getSymbol.getCodeString)
     }
-    new DvOrdinal(name, path, codeList)
+    new DvOrdinal(name, path, dataType, codeList)
   }
 }
 
 /**
  * マルチメディア型を保存するクラス
  */
-case class DvMultiMedia(name: String, path: String, codeList: List[String]) extends DvElement {
+case class DvMultiMedia(name: String, path: String, dataType: String, codeList: List[String]) extends DvElement {
   override def toString = super.toString + (codeList mkString "\n") + "\n"
 }
 object DvMultiMedia {
-  def apply(name: String, path: String, cObject: CObject) = {
+  def apply(name: String, path: String, dataType: String, cObject: CObject) = {
     val codeList = allCatch opt {
       cObject.asInstanceOf[CComplexObject].getAttributes.get(0).getChildren.get(0).asInstanceOf[CCodePhrase].getCodeList map {
         c ⇒ Settings.Multimedia.getOrElse(c.toInt, "")
       } toList
     }
-    new DvMultiMedia(name, path, codeList.getOrElse(List()))
+    new DvMultiMedia(name, path, dataType, codeList.getOrElse(List()))
   }
 }
 
@@ -214,7 +217,7 @@ trait CheckInterval {
 /**
  * 比率を保存するクラス
  */
-case class DvProportion(name: String, path: String,
+case class DvProportion(name: String, path: String, dataType: String,
                         minNum: Option[Double], maxNum: Option[Double],
                         minDen: Option[Double], maxDen: Option[Double]) extends DvElement {
   override def toString =
@@ -223,7 +226,7 @@ case class DvProportion(name: String, path: String,
       "Denominator: min->" + minDen.getOrElse(0.0) + " max->" + maxDen.getOrElse(0.0) + "\n"
 }
 object DvProportion extends CheckInterval {
-  def apply(name: String, path: String, cObject: CObject) = {
+  def apply(name: String, path: String, dataType: String, cObject: CObject) = {
     val numerator = isSomeDouble(
       allCatch opt {
         cObject.asInstanceOf[CComplexObject].
@@ -239,7 +242,7 @@ object DvProportion extends CheckInterval {
       }
     )
 
-    new DvProportion(name, path, numerator._1, numerator._2, denominator._1, denominator._2)
+    new DvProportion(name, path, dataType, numerator._1, numerator._2, denominator._1, denominator._2)
   }
 }
 
@@ -247,11 +250,11 @@ object DvProportion extends CheckInterval {
  * 整数を保存するクラス
  * リストがすべてNoneのものもあり
  */
-case class DvCount(name: String, path: String, min: Option[Int], max: Option[Int]) extends DvElement {
+case class DvCount(name: String, path: String, dataType: String, min: Option[Int], max: Option[Int]) extends DvElement {
   override def toString = super.toString + "max->" + min.getOrElse(0) + " max->" + max.getOrElse(0) + "\n"
 }
 object DvCount extends CheckInterval {
-  def apply(name: String, path: String, cObject: CObject) = {
+  def apply(name: String, path: String, dataType: String, cObject: CObject) = {
     val range = isSomeInteger(
       allCatch opt {
         cObject.asInstanceOf[CComplexObject].
@@ -259,7 +262,7 @@ object DvCount extends CheckInterval {
           getItem.asInstanceOf[CInteger].getInterval
       }
     )
-    new DvCount(name, path, range._1, range._2)
+    new DvCount(name, path, dataType, range._1, range._2)
   }
 }
 
@@ -267,7 +270,7 @@ object DvCount extends CheckInterval {
  * 量を保存するクラス
  * リストがすべてNoneのものもあり
  */
-case class DvQuantity(name: String, path: String,
+case class DvQuantity(name: String, path: String, dataType: String,
                       min: List[Option[Double]], max: List[Option[Double]], unit: List[String]) extends DvElement {
   override def toString = {
     val range = min.zipAll(max, None, None).zipAll(unit, (None, None), "")
@@ -277,14 +280,14 @@ case class DvQuantity(name: String, path: String,
   }
 }
 object DvQuantity extends CheckInterval {
-  def apply(name: String, path: String, cObject: CObject) = {
+  def apply(name: String, path: String, dataType: String, cObject: CObject) = {
     val magnitude = allCatch opt {
       cObject.asInstanceOf[CDvQuantity].getList.toList map { item ⇒ isSomeDouble(Some(item.getMagnitude)) }
     }
     val units = allCatch opt {
       cObject.asInstanceOf[CDvQuantity].getList.toList map { item ⇒ item.getUnits }
     }
-    new DvQuantity(name, path, magnitude.getOrElse(List()).map(_._1), magnitude.getOrElse(List()).map(_._2), units.getOrElse(List()))
+    new DvQuantity(name, path, dataType, magnitude.getOrElse(List()).map(_._1), magnitude.getOrElse(List()).map(_._2), units.getOrElse(List()))
   }
 }
 
@@ -292,19 +295,19 @@ object DvQuantity extends CheckInterval {
  * 範囲を入力するリスト
  * 複数のCount,Quantityを保存する
  */
-case class DvInterval(name: String, path: String, interval: List[DvElement]) extends DvElement {
+case class DvInterval(name: String, path: String, dataType: String, interval: List[DvElement]) extends DvElement {
   override def toString = super.toString + (interval map { _.toString } mkString "\n") + "\n"
 }
 object DvInterval {
-  def apply(name: String, path: String, cObject: CObject) = {
+  def apply(name: String, path: String, dataType: String, cObject: CObject) = {
     val dvQuantityPattern = """.*DV_QUANTITY.*""".r
     val dvCountPattern = """.*DV_COUNT.*""".r
     val interval = cObject.getRmTypeName match {
-      case dvQuantityPattern() ⇒ cObject.asInstanceOf[CComplexObject].getAttributes.toList map { item ⇒ DvQuantity(name, path, item.getChildren.get(0)) }
-      case dvCountPattern()    ⇒ cObject.asInstanceOf[CComplexObject].getAttributes.toList map { item ⇒ DvCount(name, path, item.getChildren.get(0)) }
+      case dvQuantityPattern() ⇒ cObject.asInstanceOf[CComplexObject].getAttributes.toList map { item ⇒ DvQuantity(name, path, "DvQuantity", item.getChildren.get(0)) }
+      case dvCountPattern()    ⇒ cObject.asInstanceOf[CComplexObject].getAttributes.toList map { item ⇒ DvCount(name, path, "DvCound", item.getChildren.get(0)) }
       case _                   ⇒ List()
     }
-    new DvInterval(name, path, interval)
+    new DvInterval(name, path, dataType, interval)
   }
 }
 
@@ -314,19 +317,19 @@ object DvInterval {
  * 存在しなければArchetypeSlot
  * をそれぞれ生成
  */
-case class DvCluster(name: String, path: String, cluster: List[AdlAttribute]) extends AdlAttribute {
+case class DvCluster(name: String, path: String, dataType: String, cluster: List[AdlAttribute]) extends AdlAttribute {
   override def toString = super.toString + (cluster map { _.toString } mkString (" ===> ", " ===> ", "")) + "\n"
 }
 object DvCluster {
-  def apply(name: String, path: String, cObject: CObject, ontology: Ontology) = {
+  def apply(name: String, path: String, dataType: String, cObject: CObject, ontology: Ontology) = {
     val cluster = allCatch opt {
       cObject.asInstanceOf[CComplexObject].getAttributes.get(0).getChildren.toList map {
         AdlAttribute(_, ontology)
       }
     }
     cluster match {
-      case Some(c) ⇒ new DvCluster(name, path, c)
-      case None    ⇒ new DvAny(name, path)
+      case Some(c) ⇒ new DvCluster(name, path, dataType, c)
+      case None    ⇒ new DvAny(name, path, "DvAny")
     }
   }
 }
@@ -335,15 +338,15 @@ object DvCluster {
  * マルチプル型を保存する
  * 複数のelementsとタイプを保存する
  */
-case class DvMultipuleElements(name: String, path: String, elements: List[(String, AdlAttribute)]) extends DvElement {
+case class DvMultipuleElements(name: String, path: String, dataType: String, elements: List[(String, AdlAttribute)]) extends DvElement {
   override def toString = super.toString +
     (elements map { item ⇒ item._1.toString + "\n" + item._2.toString } mkString (" |-- ", " |-- ", "")) + "\n"
 }
 object DvMultipuleElements {
-  def apply(name: String, path: String, clist: List[CObject], ontology: Ontology) = {
+  def apply(name: String, path: String, dataType: String, clist: List[CObject], ontology: Ontology) = {
     val elements = clist map {
       cObject ⇒ (cObject.getRmTypeName.replaceAll("DV_", "").replaceAll("Dv", ""), DvElement.generateElement(name, cObject, ontology))
     }
-    new DvMultipuleElements(name, path, elements)
+    new DvMultipuleElements(name, path, dataType, elements)
   }
 }
