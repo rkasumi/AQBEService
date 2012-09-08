@@ -73,7 +73,7 @@ object DvElement {
       }
     } catch {
       case _ ⇒ cObject.isInstanceOf[ArchetypeInternalRef] match { // TODO リファレンス型
-        case true  ⇒ ArchetypeReference("**References", "ArchetypeReference", cObject.asInstanceOf[ArchetypeInternalRef].getTargetPath)
+        case true  ⇒ ArchetypeReference("**References", cObject.asInstanceOf[ArchetypeInternalRef].getTargetPath, "ArchetypeReference")
         case false ⇒ DvAny(name, cObject.path, "DvAny")
       }
     }

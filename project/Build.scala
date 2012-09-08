@@ -5,7 +5,7 @@ import PlayProject._
 object ApplicationBuild extends Build {
 
     val appName         = "ADLParser"
-    val appVersion      = "1.1"
+    val appVersion      = "1.11"
 
     val appDependencies = Seq(
       // Add your project dependencies here,
