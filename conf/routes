@@ -9,7 +9,7 @@ GET     /adl/:name                  controllers.ADLParserService.adl(name, lang 
 GET     /concept/:name              controllers.ADLParserService.concept(name, lang ?= "en")
 
 # AQBE API
-GET     /find                       controllers.AQBEService.find
+POST    /find                       controllers.AQBEService.find
 GET     /findAll                    controllers.AQBEService.findAll
 POST    /insert                     controllers.AQBEService.insert
 
